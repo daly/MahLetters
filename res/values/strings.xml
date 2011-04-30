@@ -37,6 +37,7 @@
  <string name="tile780x80">The number 7</string>
  <string name="tile880x80">The number 8</string>
  <string name="tile980x80">The number 9</string>
+ <string name="sound">Sound</string>
  <string name="newgame">New Game</string>
  <string name="color">Color</string>
  <string name="hint">Hint</string>

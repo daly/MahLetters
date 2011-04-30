@@ -12,7 +12,8 @@ public class TileSound extends AsyncTask<Integer, Void, Void> {
   private HashMap<Integer,Integer> spmap;
   private AudioManager am;
   private Context cxt;
-  int sound;
+  private int sound;
+  private boolean toggle = true;
 
   // called before doInBackground
   @Override
@@ -23,18 +24,7 @@ public class TileSound extends AsyncTask<Integer, Void, Void> {
   // do the long running work here
   @Override
   protected Void doInBackground(Integer... rawid) {
-    int sound = rawid[0].intValue();
-    if (am == null) { System.out.println("doInBackground am was null"); }
-    if (cxt == null) { System.out.println("doInBackground cxt was null"); }
-    try {
-    am = (AudioManager)cxt.getSystemService(Context.AUDIO_SERVICE);
-    float maxvol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-    float volume = am.getStreamVolume(AudioManager.STREAM_MUSIC) / maxvol;
-    System.out.println("doInBackground sound="+sound);
-    sp.play(spmap.get(sound),volume,volume,1,8,1f);
-    } catch (Exception e) {
-       e.printStackTrace();
-    }
+//    playSound(rawid[0].intValue);
     return null;
   }
 
@@ -61,6 +51,22 @@ public class TileSound extends AsyncTask<Integer, Void, Void> {
     sp = new SoundPool(1, AudioManager.STREAM_MUSIC,0);
     System.out.println("sp="+sp);
   }   
+
+  public boolean toggleSound() {
+    toggle = !toggle;
+    return toggle;
+  }
+
+  public void playSound(int sound) {
+    if (toggle == false) return;
+    try {
+      float maxvol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+      System.out.println("doInBackground sound="+sound);
+      sp.play(spmap.get(sound),maxvol,maxvol,1,0,1f);
+      } catch (Exception e) {
+         e.printStackTrace();
+      }
+  }
 
   public void initSounds(Context context) {
     cxt = context;

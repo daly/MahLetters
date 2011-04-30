@@ -45,7 +45,6 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
-//import android.widget.RelativeLayout.LayoutParams;
 
 public class MahLetters extends Activity implements OnClickListener {
 
@@ -53,6 +52,7 @@ public class MahLetters extends Activity implements OnClickListener {
   private static final short MENU_ABOUT = 0x2002;
   private static final short MENU_NEWGAME = 0x2003;
   private static final short MENU_COLOR = 0x2004;
+  private static final short MENU_SOUND = 0x2005;
   private float tabletheight;
   private float tabletwidth;
   private RelativeLayout board;
@@ -283,7 +283,7 @@ public class MahLetters extends Activity implements OnClickListener {
     } else {
       scale = scaleh;
     }
-    System.out.println("scaleh="+scaleh+" scalew="+scalew+" scale="+scale);
+//    System.out.println("scaleh="+scaleh+" scalew="+scalew+" scale="+scale);
     makeTiles();
     makeSoundFiles();
     makeBoard();
@@ -635,19 +635,19 @@ public class MahLetters extends Activity implements OnClickListener {
                                                  return Tile.NEITHER;
 
      case 139: if (!m[140]) { return Tile.BOTH; }
-                              return Tile.BOTH; //TILT
-     case 140: if (m[139]) { return Tile.BOTH; } //TILT
+                              return Tile.BOTH; 
+     case 140: if (m[139]) { return Tile.BOTH; } 
                              return Tile.TOP; 
-     case 141: if (m[139]) { return Tile.BOTH; } //TILT
+     case 141: if (m[139]) { return Tile.BOTH; } 
                              return Tile.SIDETILT;
-     case 142: if (m[139] && m[140] && m[141]) { return Tile.BOTH; } //TILT
+     case 142: if (m[139] && m[140] && m[141]) { return Tile.BOTH; } 
                if (m[140] && m[141])           { return Tile.SHORTCORNER; }
                if (m[139] && m[141])           { return Tile.SIDETILT; }
                if (m[139] && m[140])           { return Tile.TOP; }
                if (m[141])                     { return Tile.SHORTSIDE; }
                if (m[140])                     { return Tile.SHORTTOP; }
                                                  return Tile.NEITHER;
-     case 143: return Tile.BOTH; //TILT
+     case 143: return Tile.BOTH; 
      default:  return Tile.NEITHER;
     }
   }
@@ -687,11 +687,8 @@ public class MahLetters extends Activity implements OnClickListener {
   }
 
   private void makeSoundFiles() {
-//    player.initSounds(this);
-//    for(int i=0; i<36; i++) { player.addSound(i,sound[i]); }
-//    for(int i=0; i<36; i++) {
-//      afd[i] = getResources().openRawResourceFd(sound[i]);
-//    }
+    player.initSounds(this);
+    for(int i=0; i<36; i++) { player.addSound(i,sound[i]); }
   }
 
   private void randomizePlacement() {
@@ -766,26 +763,7 @@ public class MahLetters extends Activity implements OnClickListener {
     hideHint();
     Tile tile = (Tile) view;
     int id = tile.getId();
-//      Uri path = Uri.parse("android.resource://org.daly.letters/"+sound[id]);
-//      System.out.println("android.resource://org.daly.letters/"+sound[id]);
-//      new AsyncPlayer("").play(this,path,false,AudioManager.STREAM_MUSIC);
-//    TileSound ts = new TileSound();
-//    ts.setSound(this,sound[id]);
-//    ts.execute(sound[id]);
-//    for(int i=0; i<36; i++) { player.addSound(i,sound[i]); }
-
-//    new TileSound().execute(sound[id]);
-//    player.playSound(id);
-//    try {
-//      playr.reset();
-//      AssetFileDescriptor desc = afd[id];
-//      playr.setDataSource(desc.getFileDescriptor(),desc.getStartOffset(),
-//                          desc.getLength());
-//      playr.prepare();
-//      playr.start();
-//    } catch (Exception e) {
-//       e.printStackTrace();
-//    } 
+    player.playSound(id);
     matches(tile);
   }
 
@@ -796,7 +774,6 @@ public class MahLetters extends Activity implements OnClickListener {
     int ninety = Math.round(90*scale);
     int bindex = b.getIndex();
     if (!validMove(bindex)) { 
-      System.out.println("invalid move "+bindex);
       if (lastb != null) { 
         lastb.markUnchosen();
         lastb.postInvalidate();
@@ -1174,6 +1151,7 @@ public class MahLetters extends Activity implements OnClickListener {
     menu.add(0, MENU_NEWGAME, 0, R.string.newgame).setIcon(R.drawable.newgame);
     menu.add(0, MENU_HINT, 0, R.string.hint).setIcon(R.drawable.hint);
     menu.add(0, MENU_COLOR, 0, R.string.color).setIcon(R.drawable.color);
+    menu.add(0, MENU_SOUND, 0, R.string.sound).setIcon(R.drawable.sound);
     return true;
   }
 
@@ -1219,6 +1197,14 @@ public class MahLetters extends Activity implements OnClickListener {
           tile[i].setColor(color);
           tile[i].postInvalidate();
         }
+        return true;
+      case MENU_SOUND:
+        if (player.toggleSound()) {
+          say.setText("Sound is now on");
+        } else {
+          say.setText("Sound is now off");
+        }
+        say.postInvalidate();
         return true;
       default:
         return false;
