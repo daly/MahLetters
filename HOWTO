@@ -1,0 +1,83 @@
+export SDK=/home/daly/android/android-sdk-linux_x86/
+export SDK=/home/daly/android-sdk-linux_x86/
+export PATH=$SDK/platform-tools:$SDK/tools:$PATH
+export KEY=/home/daly/androidKey
+mkdir test1
+cd test1
+
+adb start-server
+adb kill-server
+
+android create project --target 3 --name TryAgain --path `pwd` --activity TryActivity --package org.daly
+
+-- add the build.xml file for ant
+android update project -p .
+ant clean
+ant compile
+ant release
+cd bin
+jarsigner -verbose -keystore /home/daly/androidKey -signedjar NNDraw-signed.apk NNDraw-unsigned.apk tim
+zipalign -f -v 4 NNDraw-signed.apk NNDraw-release.apk
+-- install an app
+ant clean compile release
+adb -e install bin/NNDraw-release.apk 
+adb -s emulator-5556 uninstall org.nnds
+
+-- remove an app
+adb remount /data
+adb shell ls /data/app
+adb shell rm /data/app/org.nnds-1.apk
+adb shell rm /data/local/tmp/NNDraw-release.apk 
+adb shell sync
+adb shell reboot
+
+
+-- make a new key
+keytool -genkey -alias tim -keyalg RSA -validity 20000 -keystore androidkey
+-- self sign the key
+keytool -selfcert -alias tim -keystore $KEY
+-- sign the jar file (tryagianS is the signed file)
+jarsigner -verbose -keystore $KEY -signedjar tryagainS.apk tryagain.apk tim
+-- align the jar file (tryagainSA is the signed and aligned file)
+zipalign -f -v 4 tryagainS.apk tryagainSA.apk
+
+-- create an android virtual device (AVD)
+android list targets (get the magic number 3)
+android create avd -n pad1 -t 3 (in ./android/avd)
+android create avd -n xoom1 -t 14
+android delete avd -n xoom1
+
+-- create an SD car
+mksdcard 64M sdcard1.iso
+
+-- mount it locally so we can write files to it
+mount -o loop sdcard1.iso /media/work
+
+-- start the appropriate AVD  (use ctrl-f12 to rotate)
+emulator -avd pad1 -wipe-data -no-boot-anim -scale 0.8 &
+emulator -avd xoom -wipe-data -no-boot-anim -scale 0.75 &
+emulator -avd xoom1 -wipe-data -no-boot-anim -scale 0.75 &
+emulator -avd xoom1 -wipe-data -no-boot-anim -scale 0.75 -sdcard test1/sdcard1.iso &
+
+-- install the signed/aligned apk on the AVD device
+adb -e devices
+adb connect 127.0.0.1
+
+-- full build and run:
+ant install && adb shell 'am start -n org.daly/.NNDraw'
+
+-- see what happened
+adb logcat
+
+-- see stdout in logcat
+adb shell stop
+adb shell setprop log.redirect-stdio true
+adb shell setprop log.redirect-stderr true
+adb shell start
+
+-- go directly there with shell
+adb shell
+cd /data/local/tmp
+rm NNDraw-release.apk
+cd /data/app
+rm org.nnds-1.apk
