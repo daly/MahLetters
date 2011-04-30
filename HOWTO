@@ -81,3 +81,5 @@ cd /data/local/tmp
 rm NNDraw-release.apk
 cd /data/app
 rm org.nnds-1.apk
+
+scp -P 2222 bin/MahLetters-release.apk root@192.168.1.228:/sdcard

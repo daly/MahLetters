@@ -40,7 +40,7 @@
  <string name="newgame">New Game</string>
  <string name="color">Color</string>
  <string name="hint">Hint</string>
- <string name="about">Tim Daly Literate Software May 2011</string>
+ <string name="about">About</string>
  <string name="sd_card_is_not_available">SD card is not available</string>
  <string name="send_image_to">Send Image To:</string>
 </resources>

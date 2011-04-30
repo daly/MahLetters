@@ -190,20 +190,26 @@ public class MahLetters extends Activity implements OnClickListener {
   protected void onStart() {
     super.onStart();
     System.out.println("TPDHERE0 onStart called");
-    if (keepScreenOn == null) { 
+    try {
+     if (keepScreenOn == null) { 
       keepScreenOn=pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,"tpd");
+     }
+     keepScreenOn.acquire();
+    } catch (SecurityException se) {
     }
-    keepScreenOn.acquire();
   }
 
   @Override
   protected void onResume() {
     super.onResume();
     System.out.println("TPDHERE0 onResume called");
-    if (keepScreenOn == null) { 
+    try {
+     if (keepScreenOn == null) { 
       keepScreenOn=pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,"tpd");
+     }
+     keepScreenOn.acquire();
+    } catch (SecurityException se) {
     }
-    keepScreenOn.acquire();
   }
 
   @Override
@@ -226,10 +232,13 @@ public class MahLetters extends Activity implements OnClickListener {
   protected void onRestart() {
     super.onRestart();
     System.out.println("TPDHERE0 onRestart called");
-    if (keepScreenOn == null) { 
+    try {
+     if (keepScreenOn == null) { 
       keepScreenOn=pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,"tpd");
+     }
+     keepScreenOn.acquire();
+    } catch (SecurityException se) {
     }
-    keepScreenOn.acquire();
   }
 
   @Override
@@ -1198,7 +1207,7 @@ public class MahLetters extends Activity implements OnClickListener {
         showHint();
         return true;
       case MENU_ABOUT:
-        say.setText(getString(R.string.about));
+        say.setText("Tim Daly Literate Software April 30, 2011");
         say.postInvalidate();
         return true;
       case MENU_NEWGAME:
