@@ -1,3 +1,5 @@
+20110504 tpd src/org/daly/letters/TileSound.java default sound off
+20110504 tpd src/org/daly/letters/MahLetters.java fix clock
 20110430 tpd src/org/daly/letters/MahLetters.java add score timer
 20110430 tpd res/drawable/sound.png sound icon for menu
 20110430 tpd src/org/daly/letters/TileSound.java play sounds

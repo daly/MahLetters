@@ -32,6 +32,9 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Handler.Callback;
+import android.os.Message;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.text.Layout;
@@ -50,7 +53,44 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MahLetters extends Activity implements OnClickListener {
+/*
+                     ===LAYER 0===
+    11  10   9   8   7   6   5   4   3   2   1   0
+            19  18  17  16  15  14  13  12
+        29  28  27  26  25  24  23  22  21  20
+    43  42  41  40  39  38  37  36  35  34  33  32  
+56                                                  31  30
+    55  54  53  52  51  50  49  48  47  46  45  44
+        66  65  64  63  62  61  60  59  58  57
+            74  73  72  71  70  69  68  67
+    86  85  84  83  82  81  80  79  78  77  76  75
+
+                     ===LAYER 1===
+                92  91  90  89  88  87
+                98  97  96  95  94  93
+               104 103 102 101 100  99
+               110 109 108 107 106 105
+               116 115 114 113 112 111
+               122 121 120 119 118 117
+
+                     ===LAYER 2===
+                    126 125 124 123
+                    130 129 128 127
+                    134 133 132 131
+                    138 137 136 135
+
+                     ===LAYER 3===
+                        140 139
+                        142 141
+
+                     ===LAYER 4===
+                          143
+
+*/
+
+
+public class MahLetters extends Activity implements OnClickListener,
+                                                    Handler.Callback {
 
   private static final short MENU_HINT = 0x2001;
   private static final short MENU_ABOUT = 0x2002;
@@ -96,6 +136,8 @@ public class MahLetters extends Activity implements OnClickListener {
       R.drawable.tile880x80, R.drawable.tile980x80
     };
   private TextView say = null;
+  private TextView scoreboard = null;
+  private TextView matchboard = null;
   private final int caption[] = { 
    R.string.tilea80x80,R.string.tilea80x80,
    R.string.tilea80x80,R.string.tilea80x80,
@@ -184,44 +226,43 @@ public class MahLetters extends Activity implements OnClickListener {
 
   private AssetFileDescriptor afd[] = new AssetFileDescriptor[36];
 
+  private static final boolean DEBUG = false;
+
   int hintTile1;
   int hintTile2;
   boolean hinting;
 
-  Thread timescore;
-  int thescore = 60;
-  boolean keepingScore = true;
-  boolean clockStopped = true;
-  boolean clockReallyStopped = true;
+  volatile int thescore = 60;
+  int highscore = 0;
 
-  Runnable done = new Runnable() {
-    @Override
+  private Handler handle;
+  
+  private int clockState;
+  private static final int RUNNING = 0;
+  private static final int STOPPED = 1;
+  private Runnable timescore = new Runnable () {
     public void run() {
-      System.out.println("pop");
-      changeUserMessage(SCORE,"Score="+thescore);
-      thescore = thescore - 1;
-      if (thescore == 0) {
-        stopTheClock();
-        changeUserMessage(SCORE,"Time up");
+      if (clockState == RUNNING) {
+        handle.sendMessage(new Message());
       }
     }
   };
-  Runnable clock = new Runnable() {
-    @Override
-    public void run() {
-      clockReallyStopped = false;
-      for(;;) {
-        try {
-          if (clockStopped == true) { break; }
-          Thread.sleep(1000); // 10 seconds
-          runOnUiThread(done);
-        } catch (InterruptedException e) {
-        }
-      }
-      clockReallyStopped = true;
-    }
-  };
 
+  static final long wait = 1000; // 1 second
+  public  boolean handleMessage(Message msg) {
+    scoreboard.setText(""+thescore);
+    scoreboard.postInvalidate();
+    thescore = thescore - 1;
+    if (thescore < 0) {
+      stopTheClock();
+      changeUserMessage(SCORE,"Time up");
+    }
+    handle.removeCallbacks(timescore);
+    if (clockState == RUNNING) {
+      handle.postDelayed(timescore,wait);
+    }
+    return(true);
+  }
 
   PowerManager pm;
   PowerManager.WakeLock keepScreenOn;
@@ -245,7 +286,7 @@ public class MahLetters extends Activity implements OnClickListener {
      keepScreenOn.acquire();
     } catch (SecurityException se) {
     }
-    startTheClock();
+//    startTheClock();
   }
 
   @Override
@@ -781,8 +822,44 @@ public class MahLetters extends Activity implements OnClickListener {
     randomizePlacement();
     Arrays.fill(m,false); // no tiles missing
     for(int i=0; i<=143; i++) { addTile(board,i); } 
-    computeMatchCount();
     addSay(board);
+    addScoreBoard(board);
+    addMatchBoard(board);
+    computeMatchCount();
+  }
+
+  private void addScoreBoard(RelativeLayout board) {
+    RelativeLayout.LayoutParams boardparams;
+    boardparams = new RelativeLayout.LayoutParams(Math.round(100*scale),40);
+    boardparams.leftMargin = Math.round(1160*scale);
+    boardparams.topMargin  = Math.round(100*scale);
+    scoreboard = new TextView(this);
+    scoreboard.setTextSize(20);
+    scoreboard.setSingleLine();
+    try {
+      board.addView(scoreboard,boardparams);
+    } catch (Exception e) {
+      ViewGroup vg = (ViewGroup)(scoreboard.getParent());
+      vg.removeView(scoreboard);
+      board.addView(scoreboard,boardparams);
+    }
+  }
+
+  private void addMatchBoard(RelativeLayout board) {
+    RelativeLayout.LayoutParams boardparams;
+    boardparams = new RelativeLayout.LayoutParams(Math.round(100*scale),40);
+    boardparams.leftMargin = Math.round(1160*scale);
+    boardparams.topMargin  = Math.round(180*scale);
+    matchboard = new TextView(this);
+    matchboard.setTextSize(20);
+    matchboard.setSingleLine();
+    try {
+      board.addView(matchboard,boardparams);
+    } catch (Exception e) {
+      ViewGroup vg = (ViewGroup)(matchboard.getParent());
+      vg.removeView(matchboard);
+      board.addView(matchboard,boardparams);
+    }
   }
 
   private void addSay(RelativeLayout board) {
@@ -791,14 +868,9 @@ public class MahLetters extends Activity implements OnClickListener {
     boardparams.leftMargin = Math.round(120*scale);
     boardparams.topMargin  = Math.round(700*scale);
     say = new TextView(this);
-    say.setTextSize(10);
+    say.setTextSize(15);
     say.setSingleLine();
-    if (matchcount == 1) {
-      changeUserMessage(COUNT,"Welcome to "+appname+"  There is 1 match. ");
-    } else {
-      changeUserMessage(COUNT,"Welcome to "+appname+
-                              "  There are "+matchcount+" matches.");
-    }
+    changeUserMessage(CAPTION,"Welcome to "+appname);
     try {
       board.addView(say,boardparams);
     } catch (Exception e) {
@@ -810,8 +882,10 @@ public class MahLetters extends Activity implements OnClickListener {
 
   private void computeMatchCount() {
     boolean unused[] = new boolean[144];
+    String debug = "";
     Arrays.fill(unused,true);
     matchcount = 0;
+    if (DEBUG) { System.out.println("================="); }
     for(int i=0; i<143; i++) {
       for(int j=0; j<143; j++) {
         if ((i < j) &&
@@ -820,6 +894,14 @@ public class MahLetters extends Activity implements OnClickListener {
             (tile[placement[i]].getId() == 
              tile[placement[j]].getId()) && // same tile face
             validMove(i) && validMove(j)) { // can be a valid move
+          if (DEBUG) {
+            tile[placement[i]].markChosen();
+            tile[placement[i]].postInvalidate();
+            tile[placement[j]].markChosen();
+            tile[placement[j]].postInvalidate();
+            debug = debug+"("+i+" "+j+") ";
+            System.out.println("match i="+i+" j="+j);
+          }
           unused[i] = false;
           unused[j] = false;
           matchcount++;
@@ -827,8 +909,26 @@ public class MahLetters extends Activity implements OnClickListener {
           hintTile2=j;
         }
       }
+      if (DEBUG) {
+        say.setText(debug);
+        say.postInvalidate();
+      }
     }
-    if (matchcount == 0) { newgame(); }
+    matchboard.setText(""+matchcount);
+    matchboard.postInvalidate();
+    if (matchcount == 0) {
+      int finalscore = thescore;
+      stopTheClock();
+      newgame();
+      if (highscore == 0) {
+        say.setText("Game Over. Final score = "+finalscore);
+      } else {
+        say.setText("Game Over. Final score = "+finalscore+
+                               " Previous high score = "+highscore);
+      }
+      if (finalscore > highscore) { highscore = finalscore; }
+      say.postInvalidate();
+    }
   }
 
   @Override
@@ -900,17 +1000,8 @@ public class MahLetters extends Activity implements OnClickListener {
   private void sayMatches(int index) {
     if (index >= 0) {
       changeUserMessage(CAPTION,getString(caption[placement[index]]));
-      if (matchcount == 1) {
-        changeUserMessage(COUNT,"There is 1 match.  ");
-      } else {
-        changeUserMessage(COUNT,"There are "+matchcount+" matches.  ");
-      }
-    } else {
-      if (matchcount == 1) {
-        changeUserMessage(COUNT,"There is "+matchcount+" match.");
-      } else {
-        changeUserMessage(COUNT,"There are "+matchcount+" matches.");
-      }
+      matchboard.setText(""+matchcount);
+      matchboard.postInvalidate();
     }
   }
 
@@ -1258,7 +1349,7 @@ public class MahLetters extends Activity implements OnClickListener {
         showHint();
         return true;
       case MENU_ABOUT:
-        say.setText("Tim Daly Literate Software April 30, 2011");
+        say.setText("Tim Daly Literate Software April 30, 2011 3");
         say.postInvalidate();
         return true;
       case MENU_NEWGAME:
@@ -1273,6 +1364,7 @@ public class MahLetters extends Activity implements OnClickListener {
         return true;
       case MENU_SOUND:
         if (player.toggleSound()) {
+          makeSoundFiles();
           say.setText("Sound is now on");
         } else {
           say.setText("Sound is now off");
@@ -1283,9 +1375,17 @@ public class MahLetters extends Activity implements OnClickListener {
         return false;
     }
   }
+ 
+  private void rememberTheScore() {
+    if (thescore > highscore) {
+      highscore = thescore;
+    }
+    changeUserMessage(SCORE,"Highest score was "+highscore);
+  }
 
   private void newgame() {
     board = new RelativeLayout(this);
+    rememberTheScore();
     resetTheScore();
     hideHint();
     makeTiles();
@@ -1293,28 +1393,15 @@ public class MahLetters extends Activity implements OnClickListener {
     setContentView(board);
   }
 
-  private void startTheClock() {
-    if ((keepingScore == true) && (clockStopped == true)) {
-      clockStopped = true;
-      for(int i=0; i<10; i++) { // busy wait for thread to end.
-        if (clockReallyStopped == true) {
-          clockStopped = false;
-          timescore.start();
-          break;
-        } else {
-          SystemClock.sleep(1000);
-        }
-      }
-    }
+  private synchronized void startTheClock() {
+    clockState = RUNNING;
+    handle.post(timescore);
   }
 
-  private void stopTheClock() {
-    if ((keepingScore == true) && (clockStopped == false)) {
-//      timescore.stop();
-      clockStopped = true;
-      say.setText("The final score was "+thescore);
-      say.postInvalidate();
-    }
+  private synchronized void stopTheClock() {
+    clockState = STOPPED;
+    handle.removeCallbacks(timescore);
+    
   }
 
   private void resetTheScore() {
@@ -1328,8 +1415,7 @@ public class MahLetters extends Activity implements OnClickListener {
   }
 
   private void createTheClock() {
-    clockStopped = true;
-    timescore = new Thread(clock);
+    handle = new Handler(this);
   }
 
   private boolean isStorageAvailable() {

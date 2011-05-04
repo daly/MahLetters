@@ -5,6 +5,7 @@ import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.AsyncTask;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class TileSound extends AsyncTask<Integer, Void, Void> {
@@ -13,7 +14,7 @@ public class TileSound extends AsyncTask<Integer, Void, Void> {
   private AudioManager am;
   private Context cxt;
   private int sound;
-  private boolean toggle = true;
+  private boolean toggle = false; // default to quiet
 
   // called before doInBackground
   @Override
@@ -43,17 +44,17 @@ public class TileSound extends AsyncTask<Integer, Void, Void> {
 
   public void setSound(Context context, int rawid) {
     cxt = context;
-    System.out.println("cxt="+cxt);
     spmap = new HashMap();
-    System.out.println("spmap="+spmap);
     am = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
-    System.out.println("am="+am);
     sp = new SoundPool(1, AudioManager.STREAM_MUSIC,0);
-    System.out.println("sp="+sp);
   }   
 
   public boolean toggleSound() {
     toggle = !toggle;
+    return toggle;
+  }
+
+  public boolean soundIsOn() {
     return toggle;
   }
 
@@ -69,6 +70,7 @@ public class TileSound extends AsyncTask<Integer, Void, Void> {
   }
 
   public void initSounds(Context context) {
+    if (cxt != null) return;
     cxt = context;
     sp = new SoundPool(1, AudioManager.STREAM_MUSIC,0);
     spmap = new HashMap();
@@ -76,8 +78,10 @@ public class TileSound extends AsyncTask<Integer, Void, Void> {
   }   
 
   public void addSound(int id, int rawid) {
-    System.out.println("addsound "+rawid);
-    spmap.put(id,sp.load(cxt,rawid,1));
+    if (toggle == false) return;
+    if (!spmap.containsKey(id)) {
+      spmap.put(id,sp.load(cxt,rawid,1));
+    }
   }
 
 }
