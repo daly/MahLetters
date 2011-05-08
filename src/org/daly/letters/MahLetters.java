@@ -253,7 +253,8 @@ public class MahLetters extends Activity implements OnClickListener,
     scoreboard.setText(""+thescore);
     scoreboard.postInvalidate();
     thescore = thescore - 1;
-    if (thescore < 0) {
+    if (thescore <= 0) {
+      thescore = 0;
       stopTheClock();
       changeUserMessage(SCORE,"Time up");
     }
@@ -283,7 +284,7 @@ public class MahLetters extends Activity implements OnClickListener,
      if (keepScreenOn == null) { 
       keepScreenOn=pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,"tpd");
      }
-     keepScreenOn.acquire();
+     if (keepScreenOn.isHeld() == false) { keepScreenOn.acquire(); }
     } catch (SecurityException se) {
     }
 //    startTheClock();
@@ -297,7 +298,7 @@ public class MahLetters extends Activity implements OnClickListener,
      if (keepScreenOn == null) { 
       keepScreenOn=pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,"tpd");
      }
-     keepScreenOn.acquire();
+     if (keepScreenOn.isHeld() == false) { keepScreenOn.acquire(); }
     } catch (SecurityException se) {
     }
     startTheClock();
@@ -307,9 +308,8 @@ public class MahLetters extends Activity implements OnClickListener,
   protected void onDestroy() {
     super.onDestroy();
     System.out.println("TPDHERE0 onDestroy called");
-    if (keepScreenOn != null) { 
+    if ((keepScreenOn != null) && (keepScreenOn.isHeld() == true)) { 
       keepScreenOn.release(); 
-      keepScreenOn = null;
     }
     stopTheClock();
   }
@@ -328,7 +328,7 @@ public class MahLetters extends Activity implements OnClickListener,
      if (keepScreenOn == null) { 
       keepScreenOn=pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,"tpd");
      }
-     keepScreenOn.acquire();
+     if (keepScreenOn.isHeld() == false) { keepScreenOn.acquire(); }
     } catch (SecurityException se) {
     }
     startTheClock();
@@ -338,9 +338,8 @@ public class MahLetters extends Activity implements OnClickListener,
   protected void onStop() {
     super.onStop();
     System.out.println("TPDHERE0 onStop called");
-    if (keepScreenOn != null) { 
+    if ((keepScreenOn != null) && (keepScreenOn.isHeld() == true)) { 
       keepScreenOn.release(); 
-      keepScreenOn = null;
     }
     stopTheClock();
   }
@@ -349,9 +348,8 @@ public class MahLetters extends Activity implements OnClickListener,
   protected void onPause() { 
     super.onPause();
     System.out.println("TPDHERE0 onStop called");
-    if (keepScreenOn != null) { 
+    if ((keepScreenOn != null) && (keepScreenOn.isHeld() == true)) { 
       keepScreenOn.release(); 
-      keepScreenOn = null;
     }
     stopTheClock();
   }
@@ -978,6 +976,7 @@ public class MahLetters extends Activity implements OnClickListener,
         x = (int)(placex[lastindex]*scale);
         y = (int)(placey[lastindex]*scale);
         if ((bindex > 87) || (lastindex > 87)) { updateShadows(); }
+        lastb = null;
         computeMatchCount();
         sayMatches(-1); // stop saying match tile
       } else { // not a match, make the choice the new choice
@@ -1349,7 +1348,7 @@ public class MahLetters extends Activity implements OnClickListener,
         showHint();
         return true;
       case MENU_ABOUT:
-        say.setText("Tim Daly Literate Software April 30, 2011 3");
+        say.setText("Tim Daly Literate Software April 30, 2011 6");
         say.postInvalidate();
         return true;
       case MENU_NEWGAME:
@@ -1411,7 +1410,7 @@ public class MahLetters extends Activity implements OnClickListener,
   }
 
   private void incrementTheScore() {
-    thescore = thescore + 15;
+    if (thescore > 0) { thescore = thescore + 15; }
   }
 
   private void createTheClock() {

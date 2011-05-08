@@ -1,3 +1,14 @@
+20110507 tpd src/org/daly/letters/MahLetters.java v6 fix score, WakeLock
+20110507 tpd AndroidManifest.xml version 6
+20110507 tpd MahLettersScreenshot3.png for Amazon market
+20110507 tpd MahLettersScreenshot2.png for Amazon market
+20110507 tpd MahLettersScreenshot.png for Amazon market
+20110507 tpd MahLettersLargeIcon.png for Amazon market
+20110507 tpd MahLettersIcon.png for Amazon market
+20110505 tpd MahLettersScreenshot3.png publish to amazon 854x480
+20110505 tpd MahLettersScreenshot2.png publish to amazon 854x480
+20110505 tpd MahLettersScreenshot.png publish to amazon 854x480
+20110505 tpd MahLettersIcon.png publish to Amazon 114x114px
 20110504 tpd src/org/daly/letters/TileSound.java default sound off
 20110504 tpd src/org/daly/letters/MahLetters.java fix clock
 20110430 tpd src/org/daly/letters/MahLetters.java add score timer
