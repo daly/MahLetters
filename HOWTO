@@ -1,5 +1,5 @@
-export SDK=/home/daly/android/android-sdk-linux_x86/
-export SDK=/home/daly/android-sdk-linux_x86/
+export SDK=/home/daly/android/android-sdk-linux_x86
+export SDK=/home/daly/android-sdk-linux_x86
 export PATH=$SDK/platform-tools:$SDK/tools:$PATH
 export KEY=/home/daly/androidKey
 mkdir test1
