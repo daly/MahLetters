@@ -1,3 +1,3 @@
-A program to play mahjong using Guitar fretboard tiles.
+A program to play  using Letters and Numbers
 
 
