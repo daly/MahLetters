@@ -9,9 +9,6 @@ import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
-import java.lang.InterruptedException;
-import java.lang.Runnable;
-import java.lang.Thread;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Random;
@@ -32,11 +29,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Handler.Callback;
-import android.os.Message;
 import android.os.PowerManager;
-import android.os.SystemClock;
 import android.text.Layout;
 import android.util.DisplayMetrics;
 import android.view.View;
@@ -52,51 +45,14 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
+//import android.widget.RelativeLayout.LayoutParams;
 
-/*
-                     ===LAYER 0===
-    11  10   9   8   7   6   5   4   3   2   1   0
-            19  18  17  16  15  14  13  12
-        29  28  27  26  25  24  23  22  21  20
-    43  42  41  40  39  38  37  36  35  34  33  32  
-56                                                  31  30
-    55  54  53  52  51  50  49  48  47  46  45  44
-        66  65  64  63  62  61  60  59  58  57
-            74  73  72  71  70  69  68  67
-    86  85  84  83  82  81  80  79  78  77  76  75
-
-                     ===LAYER 1===
-                92  91  90  89  88  87
-                98  97  96  95  94  93
-               104 103 102 101 100  99
-               110 109 108 107 106 105
-               116 115 114 113 112 111
-               122 121 120 119 118 117
-
-                     ===LAYER 2===
-                    126 125 124 123
-                    130 129 128 127
-                    134 133 132 131
-                    138 137 136 135
-
-                     ===LAYER 3===
-                        140 139
-                        142 141
-
-                     ===LAYER 4===
-                          143
-
-*/
-
-
-public class MahLetters extends Activity implements OnClickListener,
-                                                    Handler.Callback {
+public class MahLetters extends Activity implements OnClickListener {
 
   private static final short MENU_HINT = 0x2001;
   private static final short MENU_ABOUT = 0x2002;
   private static final short MENU_NEWGAME = 0x2003;
   private static final short MENU_COLOR = 0x2004;
-  private static final short MENU_SOUND = 0x2005;
   private float tabletheight;
   private float tabletwidth;
   private RelativeLayout board;
@@ -106,15 +62,6 @@ public class MahLetters extends Activity implements OnClickListener,
   private Tile hide[] = new Tile[144];
   private int placement[] = new int[144];
   private String appname;
-
-  private String theUserMessage = "";
-  private String scoreMessage = "";
-  private String countMessage = "";
-  private String captionMessage = "";
-  private static final int SCORE = 0;
-  private static final int COUNT = 1;
-  private static final int CAPTION = 2;
-
   private final int image[] = { 
       R.drawable.tilea80x80, R.drawable.tileb80x80,
       R.drawable.tilec80x80, R.drawable.tiled80x80,
@@ -136,8 +83,6 @@ public class MahLetters extends Activity implements OnClickListener,
       R.drawable.tile880x80, R.drawable.tile980x80
     };
   private TextView say = null;
-  private TextView scoreboard = null;
-  private TextView matchboard = null;
   private final int caption[] = { 
    R.string.tilea80x80,R.string.tilea80x80,
    R.string.tilea80x80,R.string.tilea80x80,
@@ -226,44 +171,9 @@ public class MahLetters extends Activity implements OnClickListener,
 
   private AssetFileDescriptor afd[] = new AssetFileDescriptor[36];
 
-  private static final boolean DEBUG = false;
-
   int hintTile1;
   int hintTile2;
   boolean hinting;
-
-  volatile int thescore = 60;
-  int highscore = 0;
-
-  private Handler handle;
-  
-  private int clockState;
-  private static final int RUNNING = 0;
-  private static final int STOPPED = 1;
-  private Runnable timescore = new Runnable () {
-    public void run() {
-      if (clockState == RUNNING) {
-        handle.sendMessage(new Message());
-      }
-    }
-  };
-
-  static final long wait = 1000; // 1 second
-  public  boolean handleMessage(Message msg) {
-    scoreboard.setText(""+thescore);
-    scoreboard.postInvalidate();
-    thescore = thescore - 1;
-    if (thescore <= 0) {
-      thescore = 0;
-      stopTheClock();
-      changeUserMessage(SCORE,"Time up");
-    }
-    handle.removeCallbacks(timescore);
-    if (clockState == RUNNING) {
-      handle.postDelayed(timescore,wait);
-    }
-    return(true);
-  }
 
   PowerManager pm;
   PowerManager.WakeLock keepScreenOn;
@@ -284,10 +194,9 @@ public class MahLetters extends Activity implements OnClickListener,
      if (keepScreenOn == null) { 
       keepScreenOn=pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,"tpd");
      }
-     if (keepScreenOn.isHeld() == false) { keepScreenOn.acquire(); }
+     keepScreenOn.acquire();
     } catch (SecurityException se) {
     }
-//    startTheClock();
   }
 
   @Override
@@ -298,20 +207,19 @@ public class MahLetters extends Activity implements OnClickListener,
      if (keepScreenOn == null) { 
       keepScreenOn=pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,"tpd");
      }
-     if (keepScreenOn.isHeld() == false) { keepScreenOn.acquire(); }
+     keepScreenOn.acquire();
     } catch (SecurityException se) {
     }
-    startTheClock();
   }
 
   @Override
   protected void onDestroy() {
     super.onDestroy();
     System.out.println("TPDHERE0 onDestroy called");
-    if ((keepScreenOn != null) && (keepScreenOn.isHeld() == true)) { 
+    if (keepScreenOn != null) { 
       keepScreenOn.release(); 
+      keepScreenOn = null;
     }
-    stopTheClock();
   }
 
   @Override
@@ -328,30 +236,29 @@ public class MahLetters extends Activity implements OnClickListener,
      if (keepScreenOn == null) { 
       keepScreenOn=pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,"tpd");
      }
-     if (keepScreenOn.isHeld() == false) { keepScreenOn.acquire(); }
+     keepScreenOn.acquire();
     } catch (SecurityException se) {
     }
-    startTheClock();
   }
 
   @Override
   protected void onStop() {
     super.onStop();
     System.out.println("TPDHERE0 onStop called");
-    if ((keepScreenOn != null) && (keepScreenOn.isHeld() == true)) { 
+    if (keepScreenOn != null) { 
       keepScreenOn.release(); 
+      keepScreenOn = null;
     }
-    stopTheClock();
   }
 
   @Override
   protected void onPause() { 
     super.onPause();
     System.out.println("TPDHERE0 onStop called");
-    if ((keepScreenOn != null) && (keepScreenOn.isHeld() == true)) { 
+    if (keepScreenOn != null) { 
       keepScreenOn.release(); 
+      keepScreenOn = null;
     }
-    stopTheClock();
   }
 
   @Override
@@ -376,33 +283,15 @@ public class MahLetters extends Activity implements OnClickListener,
     } else {
       scale = scaleh;
     }
-//    System.out.println("scaleh="+scaleh+" scalew="+scalew+" scale="+scale);
+    System.out.println("scaleh="+scaleh+" scalew="+scalew+" scale="+scale);
     makeTiles();
     makeSoundFiles();
     makeBoard();
-    createTheClock();
     setContentView(board);
     pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
     keepScreenOn = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK,"tpd");
   }
  
-  private void changeUserMessage(int field, String text) {
-    switch (field) {
-      case SCORE:
-        scoreMessage = text;
-        break;
-      case COUNT:
-        countMessage = text;
-        break;
-      case CAPTION:
-        captionMessage = text;
-        break;
-    }
-    theUserMessage = scoreMessage+" "+countMessage+" "+captionMessage;
-    say.setText(theUserMessage);
-    say.postInvalidate();
-  }
-
   int[] placex = 
    {
         1000,920,840,760,680,600,520,440,360,280,200,120,
@@ -746,19 +635,19 @@ public class MahLetters extends Activity implements OnClickListener,
                                                  return Tile.NEITHER;
 
      case 139: if (!m[140]) { return Tile.BOTH; }
-                              return Tile.BOTH; 
-     case 140: if (m[139]) { return Tile.BOTH; } 
+                              return Tile.BOTH; //TILT
+     case 140: if (m[139]) { return Tile.BOTH; } //TILT
                              return Tile.TOP; 
-     case 141: if (m[139]) { return Tile.BOTH; } 
+     case 141: if (m[139]) { return Tile.BOTH; } //TILT
                              return Tile.SIDETILT;
-     case 142: if (m[139] && m[140] && m[141]) { return Tile.BOTH; } 
+     case 142: if (m[139] && m[140] && m[141]) { return Tile.BOTH; } //TILT
                if (m[140] && m[141])           { return Tile.SHORTCORNER; }
                if (m[139] && m[141])           { return Tile.SIDETILT; }
                if (m[139] && m[140])           { return Tile.TOP; }
                if (m[141])                     { return Tile.SHORTSIDE; }
                if (m[140])                     { return Tile.SHORTTOP; }
                                                  return Tile.NEITHER;
-     case 143: return Tile.BOTH; 
+     case 143: return Tile.BOTH; //TILT
      default:  return Tile.NEITHER;
     }
   }
@@ -798,8 +687,11 @@ public class MahLetters extends Activity implements OnClickListener,
   }
 
   private void makeSoundFiles() {
-    player.initSounds(this);
-    for(int i=0; i<36; i++) { player.addSound(i,sound[i]); }
+//    player.initSounds(this);
+//    for(int i=0; i<36; i++) { player.addSound(i,sound[i]); }
+//    for(int i=0; i<36; i++) {
+//      afd[i] = getResources().openRawResourceFd(sound[i]);
+//    }
   }
 
   private void randomizePlacement() {
@@ -820,44 +712,8 @@ public class MahLetters extends Activity implements OnClickListener,
     randomizePlacement();
     Arrays.fill(m,false); // no tiles missing
     for(int i=0; i<=143; i++) { addTile(board,i); } 
-    addSay(board);
-    addScoreBoard(board);
-    addMatchBoard(board);
     computeMatchCount();
-  }
-
-  private void addScoreBoard(RelativeLayout board) {
-    RelativeLayout.LayoutParams boardparams;
-    boardparams = new RelativeLayout.LayoutParams(Math.round(100*scale),40);
-    boardparams.leftMargin = Math.round(1160*scale);
-    boardparams.topMargin  = Math.round(100*scale);
-    scoreboard = new TextView(this);
-    scoreboard.setTextSize(20);
-    scoreboard.setSingleLine();
-    try {
-      board.addView(scoreboard,boardparams);
-    } catch (Exception e) {
-      ViewGroup vg = (ViewGroup)(scoreboard.getParent());
-      vg.removeView(scoreboard);
-      board.addView(scoreboard,boardparams);
-    }
-  }
-
-  private void addMatchBoard(RelativeLayout board) {
-    RelativeLayout.LayoutParams boardparams;
-    boardparams = new RelativeLayout.LayoutParams(Math.round(100*scale),40);
-    boardparams.leftMargin = Math.round(1160*scale);
-    boardparams.topMargin  = Math.round(180*scale);
-    matchboard = new TextView(this);
-    matchboard.setTextSize(20);
-    matchboard.setSingleLine();
-    try {
-      board.addView(matchboard,boardparams);
-    } catch (Exception e) {
-      ViewGroup vg = (ViewGroup)(matchboard.getParent());
-      vg.removeView(matchboard);
-      board.addView(matchboard,boardparams);
-    }
+    addSay(board);
   }
 
   private void addSay(RelativeLayout board) {
@@ -866,9 +722,13 @@ public class MahLetters extends Activity implements OnClickListener,
     boardparams.leftMargin = Math.round(120*scale);
     boardparams.topMargin  = Math.round(700*scale);
     say = new TextView(this);
-    say.setTextSize(15);
+    say.setTextSize(10);
     say.setSingleLine();
-    changeUserMessage(CAPTION,"Welcome to "+appname);
+    if (matchcount == 1) {
+      say.setText("Welcome to "+appname+"  There is 1 match. ");
+    } else {
+      say.setText("Welcome to "+appname+"  There are "+matchcount+" matches.");
+    }
     try {
       board.addView(say,boardparams);
     } catch (Exception e) {
@@ -880,10 +740,8 @@ public class MahLetters extends Activity implements OnClickListener,
 
   private void computeMatchCount() {
     boolean unused[] = new boolean[144];
-    String debug = "";
     Arrays.fill(unused,true);
     matchcount = 0;
-    if (DEBUG) { System.out.println("================="); }
     for(int i=0; i<143; i++) {
       for(int j=0; j<143; j++) {
         if ((i < j) &&
@@ -892,14 +750,6 @@ public class MahLetters extends Activity implements OnClickListener,
             (tile[placement[i]].getId() == 
              tile[placement[j]].getId()) && // same tile face
             validMove(i) && validMove(j)) { // can be a valid move
-          if (DEBUG) {
-            tile[placement[i]].markChosen();
-            tile[placement[i]].postInvalidate();
-            tile[placement[j]].markChosen();
-            tile[placement[j]].postInvalidate();
-            debug = debug+"("+i+" "+j+") ";
-            System.out.println("match i="+i+" j="+j);
-          }
           unused[i] = false;
           unused[j] = false;
           matchcount++;
@@ -907,26 +757,8 @@ public class MahLetters extends Activity implements OnClickListener,
           hintTile2=j;
         }
       }
-      if (DEBUG) {
-        say.setText(debug);
-        say.postInvalidate();
-      }
     }
-    matchboard.setText(""+matchcount);
-    matchboard.postInvalidate();
-    if (matchcount == 0) {
-      int finalscore = thescore;
-      stopTheClock();
-      newgame();
-      if (highscore == 0) {
-        say.setText("Game Over. Final score = "+finalscore);
-      } else {
-        say.setText("Game Over. Final score = "+finalscore+
-                               " Previous high score = "+highscore);
-      }
-      if (finalscore > highscore) { highscore = finalscore; }
-      say.postInvalidate();
-    }
+    if (matchcount == 0) { newgame(); }
   }
 
   @Override
@@ -934,7 +766,26 @@ public class MahLetters extends Activity implements OnClickListener,
     hideHint();
     Tile tile = (Tile) view;
     int id = tile.getId();
-    player.playSound(id);
+//      Uri path = Uri.parse("android.resource://org.daly.letters/"+sound[id]);
+//      System.out.println("android.resource://org.daly.letters/"+sound[id]);
+//      new AsyncPlayer("").play(this,path,false,AudioManager.STREAM_MUSIC);
+//    TileSound ts = new TileSound();
+//    ts.setSound(this,sound[id]);
+//    ts.execute(sound[id]);
+//    for(int i=0; i<36; i++) { player.addSound(i,sound[i]); }
+
+//    new TileSound().execute(sound[id]);
+//    player.playSound(id);
+//    try {
+//      playr.reset();
+//      AssetFileDescriptor desc = afd[id];
+//      playr.setDataSource(desc.getFileDescriptor(),desc.getStartOffset(),
+//                          desc.getLength());
+//      playr.prepare();
+//      playr.start();
+//    } catch (Exception e) {
+//       e.printStackTrace();
+//    } 
     matches(tile);
   }
 
@@ -945,6 +796,7 @@ public class MahLetters extends Activity implements OnClickListener,
     int ninety = Math.round(90*scale);
     int bindex = b.getIndex();
     if (!validMove(bindex)) { 
+      System.out.println("invalid move "+bindex);
       if (lastb != null) { 
         lastb.markUnchosen();
         lastb.postInvalidate();
@@ -964,7 +816,6 @@ public class MahLetters extends Activity implements OnClickListener,
     } else { // match? same face but different location
       lastindex = lastb.getIndex();
       if ((lastb.getId() == b.getId()) && (lastindex != bindex)) {
-        incrementTheScore();
         m[bindex] = true;
         b.setVisibility(View.INVISIBLE);
         b.postInvalidate();
@@ -976,7 +827,6 @@ public class MahLetters extends Activity implements OnClickListener,
         x = (int)(placex[lastindex]*scale);
         y = (int)(placey[lastindex]*scale);
         if ((bindex > 87) || (lastindex > 87)) { updateShadows(); }
-        lastb = null;
         computeMatchCount();
         sayMatches(-1); // stop saying match tile
       } else { // not a match, make the choice the new choice
@@ -998,15 +848,25 @@ public class MahLetters extends Activity implements OnClickListener,
 
   private void sayMatches(int index) {
     if (index >= 0) {
-      changeUserMessage(CAPTION,getString(caption[placement[index]]));
-      matchboard.setText(""+matchcount);
-      matchboard.postInvalidate();
+      if (matchcount == 1) {
+        say.setText("There is 1 match.  "+
+                    getString(caption[placement[index]]));
+      } else {
+        say.setText("There are "+matchcount+" matches.  "+
+                    getString(caption[placement[index]]));
+      }
+    } else {
+      if (matchcount == 1) {
+        say.setText("There is "+matchcount+" match.");
+      } else {
+        say.setText("There are "+matchcount+" matches.");
+      }
     }
+    say.postInvalidate();
   }
 
   private void sayDebug(String msg) {
     say.setText(msg);
-    say.postInvalidate();
   }
 
   private boolean validMove(int move) {
@@ -1314,7 +1174,6 @@ public class MahLetters extends Activity implements OnClickListener,
     menu.add(0, MENU_NEWGAME, 0, R.string.newgame).setIcon(R.drawable.newgame);
     menu.add(0, MENU_HINT, 0, R.string.hint).setIcon(R.drawable.hint);
     menu.add(0, MENU_COLOR, 0, R.string.color).setIcon(R.drawable.color);
-    menu.add(0, MENU_SOUND, 0, R.string.sound).setIcon(R.drawable.sound);
     return true;
   }
 
@@ -1348,7 +1207,7 @@ public class MahLetters extends Activity implements OnClickListener,
         showHint();
         return true;
       case MENU_ABOUT:
-        say.setText("Tim Daly Literate Software April 30, 2011 6");
+        say.setText("Tim Daly Literate Software April 30, 2011");
         say.postInvalidate();
         return true;
       case MENU_NEWGAME:
@@ -1361,60 +1220,17 @@ public class MahLetters extends Activity implements OnClickListener,
           tile[i].postInvalidate();
         }
         return true;
-      case MENU_SOUND:
-        if (player.toggleSound()) {
-          makeSoundFiles();
-          say.setText("Sound is now on");
-        } else {
-          say.setText("Sound is now off");
-        }
-        say.postInvalidate();
-        return true;
       default:
         return false;
     }
   }
- 
-  private void rememberTheScore() {
-    if (thescore > highscore) {
-      highscore = thescore;
-    }
-    changeUserMessage(SCORE,"Highest score was "+highscore);
-  }
 
   private void newgame() {
     board = new RelativeLayout(this);
-    rememberTheScore();
-    resetTheScore();
     hideHint();
     makeTiles();
     makeBoard();
     setContentView(board);
-  }
-
-  private synchronized void startTheClock() {
-    clockState = RUNNING;
-    handle.post(timescore);
-  }
-
-  private synchronized void stopTheClock() {
-    clockState = STOPPED;
-    handle.removeCallbacks(timescore);
-    
-  }
-
-  private void resetTheScore() {
-    stopTheClock();
-    thescore = 60;
-    startTheClock();
-  }
-
-  private void incrementTheScore() {
-    if (thescore > 0) { thescore = thescore + 15; }
-  }
-
-  private void createTheClock() {
-    handle = new Handler(this);
   }
 
   private boolean isStorageAvailable() {

@@ -1,25 +1,3 @@
-20110520 tpd MahLettersScreenshot800x480.png for Google app store
-20110520 tpd MahLettersScreenshot3800x480.png for Google app store
-20110520 tpd MahLettersIcon180x120.png for Google app store
-20110520 tpd HOWTO add build instructions
-20110507 tpd src/org/daly/letters/MahLetters.java v6 fix score, WakeLock
-20110507 tpd AndroidManifest.xml version 6
-20110507 tpd MahLettersScreenshot3.png for Amazon market
-20110507 tpd MahLettersScreenshot2.png for Amazon market
-20110507 tpd MahLettersScreenshot.png for Amazon market
-20110507 tpd MahLettersLargeIcon.png for Amazon market
-20110507 tpd MahLettersIcon.png for Amazon market
-20110505 tpd MahLettersScreenshot3.png publish to amazon 854x480
-20110505 tpd MahLettersScreenshot2.png publish to amazon 854x480
-20110505 tpd MahLettersScreenshot.png publish to amazon 854x480
-20110505 tpd MahLettersIcon.png publish to Amazon 114x114px
-20110504 tpd src/org/daly/letters/TileSound.java default sound off
-20110504 tpd src/org/daly/letters/MahLetters.java fix clock
-20110430 tpd src/org/daly/letters/MahLetters.java add score timer
-20110430 tpd res/drawable/sound.png sound icon for menu
-20110430 tpd src/org/daly/letters/TileSound.java play sounds
-20110430 tpd src/org/daly/letters/MahLetters.java toggle sound menu item
-20110430 tpd res/values/strings.xml add sound menu string
 20110430 tpd HOWTO update with scp command, PATH
 20110430 tpd res/drawable/about.png new artwork
 20110430 tpd res/drawable/color.png new artwork

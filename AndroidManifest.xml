@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="org.daly.letters" 
           android:versionCode="9" 
-          android:versionName="6.0">
+          android:versionName="1.0">
  <application android:icon="@drawable/icon" 
               android:label="@string/app_name"
               android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
