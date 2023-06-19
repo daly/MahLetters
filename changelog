@@ -1,7 +1,0 @@
-20110430 tpd HOWTO update with scp command, PATH
-20110430 tpd res/drawable/about.png new artwork
-20110430 tpd res/drawable/color.png new artwork
-20110430 tpd res/drawable/hint.png new artwork
-20110430 tpd res/drawable/newgame.png new artwork
-20110430 tpd res/values/strings.xml fix about
-20110430 tpd src/org/daly/letters/MahLetters.java fix about, power handling
