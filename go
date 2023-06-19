@@ -1,1 +1,0 @@
-( export PATH=export PATH=/opt/apache-ant-1.8.2/bin:/home/daly/go/bin:/space/android/android-sdk-linux_x86/platform-tools:/space/android/android-sdk-linux_x86/tools:$PATH ; adb -s emulator-5554 uninstall org.daly.letters && ant clean compile release && adb -s emulator-5554 install bin/MahLetters-release.apk && adb -s emulator-5554 logcat )
